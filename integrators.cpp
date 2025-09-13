@@ -2,13 +2,17 @@
 #include <cmath>
 #include <stdio.h>
 #include "integrators.hpp"
-#include "gaussrules.hpp"
 #include <iostream>
 #include <iomanip>
 #include <functional>
 #include <stdexcept>
 #include <vector> 
 #include <limits> 
+#include <fstream> 
+#include <sstream> 
+#include <string> 
+#include <cstdio> 
+#include <iostream> 
 
 using namespace std; 
 
@@ -16,6 +20,7 @@ using namespace std;
 // Make sure the number of intervals used is valid for each integrator
 
 
+//_______________________________________________________________________________________________________________
 // Integration using trapezoid rule 
 // npts : number of points used in calculation (npts>=2)
 double trapez(function<double(double)> fcn, unsigned int npts, double x_min, double x_max) {
@@ -30,18 +35,22 @@ double trapez(function<double(double)> fcn, unsigned int npts, double x_min, dou
   //get list of fcn evaluation points
   const double dx = (x_max - x_min)/((double)npts-1); 
 
-  //this is not the most computationally efficient way to compute this (there are redundant calculations), 
-  // but it is easier to read this way. 
+  //compute the integral according to simpson's rule 
   double x = x_min; 
 
-  for (int i=0; i<npts-1; i++) { 
-    sum += 0.5 * ( fcn(x + dx) + fcn(x) ) * dx; 
+  for (int i=0; i<npts; i++) { 
+
+    //compute the weight, according to the trapezoid rule
+    double weight = (i == 0 || i == npts-1) ? dx/2. : dx; 
+  
+    sum += weight * fcn(x); 
     x   += dx; 
   }
 
   return sum;
 }      
 
+//_______________________________________________________________________________________________________________
 // Integration using Simpson's rule
 // npts : number of points used in calculation (npts odd, and >=3)
 double simpson(function<double(double)> fcn, unsigned int npts, double x_min, double x_max){  
@@ -79,144 +88,69 @@ double simpson(function<double(double)> fcn, unsigned int npts, double x_min, do
   return sum;
 }  
 
-// Integration using Gauss's rule, code is based on the Landau text
-// This is not a very good implementation
-double gaussint (double (*f)(double x), unsigned npts, double min, double max){
-  double result = 0.;
-  const unsigned MAXPOINTS=10000;
-  double w[MAXPOINTS];    // for points and weights
-  double xi[MAXPOINTS];
+
+//_______________________________________________________________________________________________________________
+GaussInt::GaussInt(const char* path_dbfile) 
+  : is_init(false), fPoints{}
+{
+  //see if we can open the file
+  ifstream file(path_dbfile);
+
+  if (!file.is_open()) {
+    ostringstream oss; 
+    oss << "in <GaussInt::GaussInt>: unable to open file '" << path_dbfile << "'";
+    throw invalid_argument(oss.str()); 
+    return;  
+  }
+
+  //now, we can parse the file 
+  string line, token; 
   
-  if (npts>MAXPOINTS) npts=MAXPOINTS;
-  gauss (npts, min, max, xi, w);      // returns Legendre polynomials
-  // points and weights
-  double c1 = (max - min) / 2;
-  double c2 = (max + min) / 2;
-  for (unsigned n=0; n<npts; n++){
-    result += w[n] * f(c1 * xi[n] + c2);   // calculating the integral
-  } 
-  return result/2;                  
-}
+  //start with an empty vector 
+  fPoints.push_back({});
+  
+  vector<GaussQuadPoint_t> new_order{}; 
+  int npts_order=1;
+  
+  unsigned int line_num = 0; 
 
-// calculate the weights and intervals for the n-point rule
-void gauss(unsigned npts, double a, double b, double x[], double w[]){    
-  // npts     number of points
-  // x, w     output grid interval points and weights.			      
+  while(getline(file,line)) { line_num++; 
 
-  double  t, t1, pp=0, p1, p2, p3;
-  double  eps = 3.e-10;			// limit for accuracy
-
-  // calculating roots of Legendre polynomials and wgt cofficients
-  unsigned m = (npts+1)/2;
-  for(unsigned i=1; i<=m; i++){  
-    t  = cos(M_PI*(i-0.25)/(npts+0.5));
-    t1 = 1;
-    while(fabs(t-t1)>=eps){ 
-      p1 = 1.0;
-      p2 = 0.0;
-      for(unsigned j=1; j<=npts; j++) {
-	p3 = p2;
-	p2 = p1;
-	p1 = ((2*j-1)*t*p2-(j-1)*p3)/j;
+    //check if line is empty, or if this is a comment line, starting with '#', then skip it. 
+    if (line.empty() || line[0]=='#') {
+      //check to see if this newline was encountered before we're done parsing all our points for this order
+      if (!new_order.empty()) {
+        ostringstream oss; 
+        oss <<  "in <GaussInt::GaussInt>: blank line or comment line (#) encountered before expected."
+                " parsing order " << npts_order << ", line " << line_num << " size=" << new_order.size(); 
+        throw invalid_argument(oss.str()); 
+        return; 
       }
-      pp = npts*(t*p1-p2)/(t*t-1);
-      t1 = t;
-      t  = t1 - p1/pp;
-    }   
-    x[i-1] = -t;
-    x[npts-i] = t;
-    w[i-1]    = 2.0/((1-t*t)*pp*pp);
-    w[npts-i] = w[i-1];
-  } 
-}
+      continue; 
+    }
 
-// modified from rosettacode.org
-// this is a MUCH better implemtation of the Gaussian quadrature method
-GaussInt::GaussInt(int npoints){
-  Init(npoints);
-}
-
-#if __GNUC_PREREQ(4,6)
-__float128 GaussInt::lege_eval(int n, __float128 x){
-  __float128 s = lcoef[n][n];
-  for (int i = n; i>0; i--)
-    s = s * x + lcoef[n][i - 1];
-  return s;
-}
-
-__float128 GaussInt::lege_diff(int n, __float128 x){
-  return n * (x * lege_eval(n, x) - lege_eval(n - 1, x)) / (x * x - 1);
-}
-#endif
-
-
-void GaussInt::Init(int npoints){
-
-  // calculates abscissas and weights to double precision accuracy
-  // for n-point quadrature rule
-  // Note: In practice you would generally not bother with this step,
-  // instead tables of abscissas and weights would be calculated once for
-  // a selection of n-point rules and saved for later usage
-
-#if __GNUC_PREREQ(4,6)  
-  lroots.assign(npoints,0);
-  weight.assign(npoints,0);
-  lcoef.assign(npoints+1,vector<__float128>(npoints+1,0));
-  
-  lcoef[0][0] = lcoef[1][1] = 1;
-  for (int n = 2; n <= npoints; n++) {
-    lcoef[n][0] = -(n - 1) * lcoef[n - 2][0] / n;
-    for (int i = 1; i <= n; i++)
-      lcoef[n][i] = ((2 * n - 1) * lcoef[n - 1][i - 1]
-		     - (n - 1) * lcoef[n - 2][i] ) / n;
-  }
-
-  __float128 x, x1;
-  for (int i = 1; i <= npoints; i++) {
-    x = cos(M_PI * (i - .25) / (npoints + .5));
-    do {
-      x1 = x;
-      x -= lege_eval(npoints, x) / lege_diff(npoints, x);
-    } while (fabs((long double)(x-x1))>1e-16);  // keep double precision 
-    lroots[i - 1] = x;
+    //if not, we're ready to parse the data
+    istringstream iss(line); 
     
-    x1 = lege_diff(npoints, x);
-    weight[i - 1] = 2 / ((1 - x * x) * x1 * x1);
+    //add this point to the list of points for this order 
+    double x, weight; 
+    iss >> x >> weight; 
+    new_order.push_back({ x, weight }); 
+
+    printf("term/order %i/%3i, x/weight: %+.3e / %+.3e\n", npts_order, new_order.size(), x, weight ); 
+
+    //if we have enough points for this order, then move on to the next one.
+    //for example, 1st order has 1 total points, 2nd order has 2, etc.  
+    if (new_order.size() >= npts_order) {
+
+      fPoints.push_back( new_order ); 
+      new_order.clear();
+      npts_order++;  
+    }
   }
-  // cout << "==== " << npoints << " ====" << endl;
-  // cout.precision(20);
-  // for (int i = 0; i < npoints; i++)
-  //   cout << (double) weight[i] << " " << (double) lroots[i] << endl;
-#else
-  // if we have an older compiler use the precomputed values
-  if (npoints>MAXPOINTRULE){
-    npoints=MAXPOINTRULE;
-    cout << "Truncating to " << MAXPOINTRULE << "-point rule" << endl;
-    cout << "Use gcc 4.6 or higher to enable calculation of higher point rules" << endl;
-  }
-  double *wa = &GAUSSWA[npoints*npoints-(npoints+2)];
-  weight.clear();
-  lroots.clear();
-  for (int i=0; i<npoints*2; i+=2){
-    weight.push_back(wa[i]);
-    lroots.push_back(wa[i+1]);
-  }
-#endif  
+
+  //set the init status flag to 'true' 
+  is_init=true; 
 }
 
-// notice the efficiency of the integration
-// once the constants for the n-point rule are calculated
-// the integral is a very simple sum
-double GaussInt::Integ(double (*f)(double x), double a, double b){
 
-  // ### complete code here ###
-  
-  return 0;  // integral of function f
-}
-
-void GaussInt::PrintWA() const{
-  cout << "Weights, abscissas for " << weight.size() << " point rule" << endl;
-  for (unsigned i = 0; i < weight.size(); i++){
-    cout  << std::setprecision(34) << (long double) weight[i] << "   " << (long double) lroots[i] << endl;
-  }
-}
