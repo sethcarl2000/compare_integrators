@@ -5,8 +5,12 @@
 #include "gaussrules.hpp"
 #include <iostream>
 #include <iomanip>
-using std::cout;
-using std::endl;
+#include <functional>
+#include <stdexcept>
+#include <vector> 
+#include <limits> 
+
+using namespace std; 
 
 // Note: this code is not safe wrt the number of intervals
 // Make sure the number of intervals used is valid for each integrator
@@ -14,21 +18,48 @@ using std::endl;
 
 // Integration using trapezoid rule 
 // npts : number of points used in calculation (npts>=2)
-double trapez (double (*f)(double x), unsigned npts, double min, double max) {
+double trapez(function<double(double)> fcn, unsigned int npts, double x_min, double x_max) {
+
+  if (npts < 2) {
+    throw invalid_argument("in <trapez>: number of pts must be at least 2"); 
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+
   double sum=0.;		 
 
-  // complete your code here
-  
-  return (sum);
+  //get list of fcn evaluation points
+  const double dx = (x_max - x_min)/((double)npts-1); 
+
+  //this is not the most computationally efficient way to compute this (there are redundant calculations), 
+  // but it is easier to read this way. 
+  double x = x_min; 
+
+  for (int i=0; i<npts-1; i++) { 
+    sum += 0.5 * ( fcn(x + dx) + fcn(x) ) * dx; 
+    x   += dx; 
+  }
+
+  return sum;
 }      
 
 // Integration using Simpson's rule
 // npts : number of points used in calculation (npts odd, and >=3)
-double simpson (double (*f)(double x), unsigned npts, double min, double max){  
+double simpson (function<double(double)> fcn, unsigned int npts, double x_min, double x_max){  
+  
   double sum=0.;
 
-  // complete your code here
-  
+  //check to make sure that the 'npts' is >= 3, and odd. 
+
+  if (npts < 3 || npts % 2 != 1) {
+    throw invalid_argument("in <simpson>: Number of points invalid. must be >= 3, and odd."); 
+    return std::numeric_limits<double>::quiet_NaN(); 
+  }
+
+  //This is the result of fitting a parabola to each sub-interval of 3 points, and integrating that parabola. 
+
+
+
+
   return (sum);
 }  
 
