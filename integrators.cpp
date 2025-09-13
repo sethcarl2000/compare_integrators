@@ -44,23 +44,39 @@ double trapez(function<double(double)> fcn, unsigned int npts, double x_min, dou
 
 // Integration using Simpson's rule
 // npts : number of points used in calculation (npts odd, and >=3)
-double simpson (function<double(double)> fcn, unsigned int npts, double x_min, double x_max){  
+double simpson(function<double(double)> fcn, unsigned int npts, double x_min, double x_max){  
   
-  double sum=0.;
-
   //check to make sure that the 'npts' is >= 3, and odd. 
-
   if (npts < 3 || npts % 2 != 1) {
     throw invalid_argument("in <simpson>: Number of points invalid. must be >= 3, and odd."); 
     return std::numeric_limits<double>::quiet_NaN(); 
   }
+  double sum=0.;
 
   //This is the result of fitting a parabola to each sub-interval of 3 points, and integrating that parabola. 
+  double x=x_min; 
 
+  const double dx = (x_max - x_min)/((double)npts - 1); 
 
+  for (int i=0; i<npts; i++) {
 
+    double weight; 
+    //find out which weight to use
+    if (i == 0 || i == npts-1) {
 
-  return (sum);
+      //endpoints have the weight of dx/3
+      weight = dx*(1./3.); 
+    } else {
+
+      //even points {2,4,6,...} have 4.dx/3, odd points {1,3,5,...} have 2.dx/3
+      if (i % 2 == 1) { weight = dx*(4./3.); } else { weight = dx*(2./3.); }
+    }
+
+    sum += weight * fcn(x); 
+    x   += dx; 
+  } 
+
+  return sum;
 }  
 
 // Integration using Gauss's rule, code is based on the Landau text
