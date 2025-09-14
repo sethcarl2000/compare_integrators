@@ -147,6 +147,8 @@ GaussInt::GaussInt(const char* path_dbfile)
     }
   }
 
+  printf("Info in <GaussInt::GaussInt>: done parsing orders 1-%zi.\n", fPoints.size()); 
+
   //set the init status flag to 'true' 
   is_init=true; 
 }
