@@ -3,6 +3,12 @@
 #include <TFile.h> 
 #include <cmath> 
 #include <vector> 
+#include <TGraph.h> 
+#include <TLegend.h> 
+#include <TStyle.h> 
+#include <TPad.h> 
+#include <TAxis.h> 
+#include <TCanvas.h> 
 
 using namespace std; 
 
@@ -30,7 +36,7 @@ int main(int argc, char* argv[])
 
     //h-vals and erorrs are drawn in a log-log plot. 
     vector<double> error_trap{}, error_simp{}, error_gauss{};  
-/*
+
     for (int N : N_vals) {
 
         double analytical = fcn_indef_integral(x_max) - fcn_indef_integral(x_min); 
@@ -48,31 +54,44 @@ int main(int argc, char* argv[])
         y_max = max<double>(y_max, y); 
     }; 
 
-    for (auto y : error_fwd)    find_min_max(y); 
-    for (auto y : error_cent)   find_min_max(y); 
-    for (auto y : error_extrap) find_min_max(y); 
+    for (auto y : error_trap)  find_min_max(y); 
+    for (auto y : error_simp)  find_min_max(y); 
+    for (auto y : error_gauss) find_min_max(y); 
+
+    vector<double> N_vals_double; 
+    for (int N : N_vals) N_vals_double.push_back((double)N); 
+
+    for (int i=0; i<error_trap.size(); i++) {
+        printf("n, trap,simp,gauss:  %3i : %-.4e, %-.4e, %-.4e\n", 
+            N_vals[i], 
+            error_trap[i],
+            error_simp[i],
+            error_gauss[i]
+        ); 
+    }
+    
+    auto canv = new TCanvas; 
 
     //now, create the graphs
-    auto graph_fwd    = new TGraph( h_vals.size(), h_vals.data(), error_fwd.data() );
-    auto graph_cent   = new TGraph( h_vals.size(), h_vals.data(), error_cent.data() );
-    auto graph_extrap = new TGraph( h_vals.size(), h_vals.data(), error_extrap.data() );
+    auto graph_trap   = new TGraph( N_vals.size(), N_vals_double.data(), error_trap.data() );
+    auto graph_simp   = new TGraph( N_vals.size(), N_vals_double.data(), error_simp.data() );
+    auto graph_extrap = new TGraph( N_vals.size(), N_vals_double.data(), error_gauss.data() );
 
     //set the log scale for x & y 
-    gPad->SetLogx(1); gPad->SetLogy(1); 
+    gPad->SetLogy(1); 
 
     //set margin so we can see the histo titles
     gPad->SetLeftMargin(0.12); 
     gPad->SetRightMargin(0.05); 
 
     //draw both of the graphs
-    graph_fwd->SetTitle(Form("x = %.1f;h;relative error",x));
-    graph_fwd->GetYaxis()->SetRangeUser( y_min, y_max );  
-    graph_fwd->Draw(); 
+    graph_trap->GetYaxis()->SetRangeUser( 1e-18, 1e-2 );  
+    graph_trap->Draw(); 
 
-    graph_cent->SetLineColor(kRed); 
-    graph_cent->SetLineStyle(kDashed); 
-    graph_cent->SetLineWidth(2); 
-    graph_cent->Draw("SAME");
+    graph_simp->SetLineColor(kRed); 
+    graph_simp->SetLineStyle(kDashed); 
+    graph_simp->SetLineWidth(2); 
+    graph_simp->Draw("SAME");
     
     graph_extrap->SetLineColor(kBlue); 
     graph_extrap->SetLineStyle(kDotted); 
@@ -84,12 +103,13 @@ int main(int argc, char* argv[])
 
     legend->SetHeader("Differentiation Method"); 
     
-    legend->AddEntry(graph_fwd,    "forward"); 
-    legend->AddEntry(graph_cent,   "central");
+    legend->AddEntry(graph_trap,   "forward"); 
+    legend->AddEntry(graph_simp,   "central");
     legend->AddEntry(graph_extrap, "extrapolated");
     
     legend->Draw();  
-*/ 
+
+    canv->SaveAs("Errors.png"); 
 
     return 0; 
 }
