@@ -153,4 +153,26 @@ GaussInt::GaussInt(const char* path_dbfile)
   is_init=true; 
 }
 
+//_______________________________________________________________________________________________________________
+double GaussInt::Integral(function<double(double)> fcn, unsigned int npts, double x_min, double x_max) const
+{ 
+  //check if the number of points requested is valid
+  if (npts < 1 || npts > (int)fPoints.size()) {
+    ostringstream oss; 
+    oss << "in <GaussInt::Integral>: Number of points requested is invalid (" << npts << "), must be  [1-" << fPoints.size() << "]"; 
+    throw invalid_argument(oss.str()); 
+  } 
+
+  const vector<GaussQuadPoint_t>& points = fPoints[npts-1];
+  
+  double sum=0.; 
+
+  const double midpoint = 0.5 * (x_max + x_min); 
+  const double scale    = 0.5 * (x_max - x_min); 
+
+  for (const auto& pt : points) sum += pt.weight * fcn( (pt.x * scale) + midpoint ); 
+
+  return sum * scale; 
+}
+
 

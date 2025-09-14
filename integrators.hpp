@@ -26,7 +26,7 @@ public:
   GaussInt(const char* path_dbfile=""); 
   ~GaussInt() { fPoints.clear(); }
 
-  double GaussQuadInt(std::function<double(double)> fcn, unsigned int npts, double x_min, double x_max) { return 0.; /*noop*/ }; 
+  double Integral(std::function<double(double)> fcn, unsigned int npts, double x_min, double x_max) const; 
 private: 
   bool is_init=false; 
   std::vector<std::vector<GaussQuadPoint_t>> fPoints; 
