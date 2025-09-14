@@ -137,8 +137,6 @@ GaussInt::GaussInt(const char* path_dbfile)
     iss >> x >> weight; 
     new_order.push_back({ x, weight }); 
 
-    printf("term/order %i/%3i, x/weight: %+.3e / %+.3e\n", npts_order, new_order.size(), x, weight ); 
-
     //if we have enough points for this order, then move on to the next one.
     //for example, 1st order has 1 total points, 2nd order has 2, etc.  
     if (new_order.size() >= npts_order) {
