@@ -1,19 +1,18 @@
-# Compare different quadrature rules for integration
+### Compiling
 
-There are two examples provided for calculating the weights and abscissas for gaussian quadrature rules, try:
+Clone the github repo to a new folder. cd into the folder and make an new repo called 'build'. then you can build it with CMake: 
 
-```
-make
-./gqconstants
-```
+    $> mkdir build
+    $> cmake -B build -S .
+    $> cmake --build build
 
-or
+then, you can create a 'link' to the executable, which is in your new 'build' folder: 
 
-```
-python gqconstants.py
-```
+    $> ln -s test_integrators build/test_integrators
 
-You can also use the C++ example as a guide to build your own executable
+You can then execute it with: 
 
-There is no need to look at rules >~25 for Gaussian quadrature.  And you can also stop at ~ 1000 divisions for the trapezoidal and Simpson's rules.  If you run much longer you'll see the numerical errors bevome visible for the trapezoidal, but hyou'll need to think about how to code efficiently or the running time may be very long.
+    $> ./test_integrators
 
+### Editing
+Most of the parameters that you might want to change can be found in 'test_integrators.cpp'. Before the 'main' function, you can see lots of parameters that you can mess with. 
