@@ -12,27 +12,35 @@
 
 using namespace std; 
 
+//the name of the function to print on the plot
+const string fcn_name{"exp(-x)"};
 
+//the function to integrate, and its analytical integral. 
+double fcn(double x) { return exp(-1.*x); }
+double fcn_indef_integral(double x) { return -1.*exp(-1.*x); }
 
-double fcn(double x) { return exp(x); }
-double fcn_indef_integral(double x) { return exp(x); }
+//the minimum and maximum N.pts to integrate with, for all methods. keep in mind that: 
+// 1. simpson's rule needs at least 3.
+// 2. simpson's rule can only work with an odd number of points, so both 'N_min' and 'N_max' must be odd. 
+// 3. if 'N_max' is more than the biggest order of gauss quad-weights given in 'gauss_quad_points_[N].dat', then an error will be thrown. 
+const int N_min = 3;
+const int N_max = 159; 
+
+//integration limits: 
+const double x_min = 0.; 
+const double x_max = 1.; 
+
+//path to 'dat' file with the quad point data. generated with 'print_legendre_roots.py' 
+const char* path_quadpoints = "gauss_quad_points_160.dat"; 
 
 int main(int argc, char* argv[])
 {
-    //this must be at least 3, and each value must be odd. 
-    const int N_min = 3; 
-    const int N_max = 159; 
-
-    //range over which to integrate 
-    const double x_max = 1.; 
-    const double x_min = 0.; 
-
     //create a vector of evenly-spaced, odd N-values
-    vector<int> N_vals;  
-    for (int N=N_min; N<=N_max; N += 2) N_vals.push_back(N); 
+    vector<int> N_vals; 
+    for (int N=N_min; N<=N_max; N += 2) { N_vals.push_back(N); } 
 
     //initialize the gaussian integrator
-    GaussInt gauss_int("gauss_quad_points_160.dat"); 
+    GaussInt gauss_int(path_quadpoints); 
 
     //h-vals and erorrs are drawn in a log-log plot. 
     vector<double> error_trap{}, error_simp{}, error_gauss{};  
@@ -85,27 +93,29 @@ int main(int argc, char* argv[])
     gPad->SetRightMargin(0.05); 
 
     //draw both of the graphs
-    graph_trap->GetYaxis()->SetRangeUser( 1e-18, 1e-2 );  
+    graph_trap->GetYaxis()->SetRangeUser( 1e-18, 1. );  
     graph_trap->Draw(); 
 
+    graph_simp->SetMarkerStyle(kPlus);
+    graph_simp->SetMarkerColor(kRed);
     graph_simp->SetLineColor(kRed); 
-    graph_simp->SetLineStyle(kDashed); 
-    graph_simp->SetLineWidth(2); 
-    graph_simp->Draw("SAME");
+    graph_simp->SetLineWidth(1); 
+    graph_simp->Draw("SAME PL");
     
+    graph_extrap->SetMarkerStyle(kMultiply); 
+    graph_extrap->SetMarkerColor(kBlue); 
     graph_extrap->SetLineColor(kBlue); 
-    graph_extrap->SetLineStyle(kDotted); 
-    graph_extrap->SetLineWidth(2); 
-    graph_extrap->Draw("SAME");
+    graph_extrap->SetLineWidth(1); 
+    graph_extrap->Draw("SAME PL");
 
     //now let's build the legend 
-    auto legend = new TLegend(0.12,0.1, 0.5,0.3); 
+    auto legend = new TLegend(0.55,0.7, 0.95,0.9); 
 
-    legend->SetHeader("Differentiation Method"); 
+    legend->SetHeader("Integration method"); 
     
-    legend->AddEntry(graph_trap,   "forward"); 
-    legend->AddEntry(graph_simp,   "central");
-    legend->AddEntry(graph_extrap, "extrapolated");
+    legend->AddEntry(graph_trap,   "Trapezoids"); 
+    legend->AddEntry(graph_simp,   "Simpson's Rule");
+    legend->AddEntry(graph_extrap, "Gauss Quads");
     
     legend->Draw();  
 
