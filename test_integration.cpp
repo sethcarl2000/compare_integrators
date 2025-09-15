@@ -12,6 +12,8 @@
 
 using namespace std; 
 
+const double twoPi = 6.28318530718; 
+
 //the name of the function to print on the plot
 const string fcn_name{"exp(-x)"};
 
@@ -32,6 +34,9 @@ const double x_max = 1.;
 
 //path to 'dat' file with the quad point data. generated with 'print_legendre_roots.py' 
 const char* path_quadpoints = "gauss_quad_points_160.dat"; 
+
+//path to the output graphic png
+const char* path_outgraphic = "Errors.png"; 
 
 int main(int argc, char* argv[])
 {
@@ -93,6 +98,8 @@ int main(int argc, char* argv[])
     gPad->SetRightMargin(0.05); 
 
     //draw both of the graphs
+    const char* graph_name = Form("Errors: Int_{%.0f}^{%.0f} %s", x_min, x_max, fcn_name.c_str()); 
+    graph_trap->SetTitle(graph_name); 
     graph_trap->GetYaxis()->SetRangeUser( 1e-18, 1. );  
     graph_trap->Draw(); 
 
@@ -119,7 +126,7 @@ int main(int argc, char* argv[])
     
     legend->Draw();  
 
-    canv->SaveAs("Errors.png"); 
+    canv->SaveAs(path_outgraphic); 
 
     return 0; 
 }
