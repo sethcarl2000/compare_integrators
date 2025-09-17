@@ -15,11 +15,11 @@ using namespace std;
 const double twoPi = 6.28318530718; 
 
 //the name of the function to print on the plot
-const string fcn_name{"exp(-x)"};
+const string fcn_name{"sin^{2}(20#pi x)"};
 
 //the function to integrate, and its analytical integral. 
-double fcn(double x) { return exp(-1.*x); }
-double fcn_indef_integral(double x) { return -1.*exp(-1.*x); }
+double fcn(double x) { return pow( sin(10.*twoPi*x), 2); }
+double fcn_indef_integral(double x) { return (x/2.) + sin(20.*twoPi*x)/(40.*twoPi); }
 
 //the minimum and maximum N.pts to integrate with, for all methods. keep in mind that: 
 // 1. simpson's rule needs at least 3.
@@ -66,7 +66,7 @@ const double x_max = 1.;
 const char* path_quadpoints = "gauss_quad_points_160.dat"; 
 
 //path to the output graphic png
-const char* path_outgraphic = "Errors.png"; 
+const char* path_outgraphic = "BadErrors.png"; 
 
 int main(int argc, char* argv[])
 {
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
     //draw both of the graphs
     const char* graph_name = Form("Errors: Int_{%.0f}^{%.0f} %s", x_min, x_max, fcn_name.c_str()); 
     graph_trap->SetTitle(graph_name); 
-    graph_trap->GetYaxis()->SetRangeUser( 1e-18, 1. );  
+    graph_trap->GetYaxis()->SetRangeUser( 1e-18, 10. );  
     graph_trap->Draw(); 
 
     graph_simp->SetMarkerStyle(kPlus);
