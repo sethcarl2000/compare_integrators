@@ -15,16 +15,15 @@ using namespace std;
 const double twoPi = 6.28318530718; 
 
 //the name of the function to print on the plot
-const string fcn_name{"sin^{2}(20#pi x)"};
+const string fcn_name{"exp(-x)"};//{"sin^{2}(20#pi x)"};
 
 //the function to integrate, and its analytical integral. 
-double fcn(double x) { return pow( sin(10.*twoPi*x), 2); }
-double fcn_indef_integral(double x) { return (x/2.) + sin(20.*twoPi*x)/(40.*twoPi); }
+double fcn(double x) { return exp(-x); }//{ return pow( sin(10.*twoPi*x), 2); }
+double fcn_indef_integral(double x) { return -1.*exp(-x); }//{ return (x/2.) + sin(20.*twoPi*x)/(40.*twoPi); }
 
 //the minimum and maximum N.pts to integrate with, for all methods. keep in mind that: 
 // 1. simpson's rule needs at least 3.
 // 2. simpson's rule can only work with an odd number of points, so both 'N_min' and 'N_max' must be odd. 
-// 3. if 'N_max' is more than the biggest order of gauss quad-weights given in 'gauss_quad_points_[N].dat', then an error will be thrown. 
 
 vector<int> Get_integration_steps(int n_min, const int npts, const bool odd_only=false) 
 {
@@ -66,7 +65,7 @@ const double x_max = 1.;
 const char* path_quadpoints = "gauss_quad_points_160.dat"; 
 
 //path to the output graphic png
-const char* path_outgraphic = "BadErrors.png"; 
+const char* path_outgraphic = "Errors.png"; 
 
 int main(int argc, char* argv[])
 {
@@ -142,13 +141,13 @@ int main(int argc, char* argv[])
     graph_simp->SetMarkerColor(kRed);
     graph_simp->SetLineColor(kRed); 
     graph_simp->SetLineWidth(1); 
-    graph_simp->Draw("SAME PL");
+    graph_simp->Draw("SAME L");
     
     graph_extrap->SetMarkerStyle(kMultiply); 
     graph_extrap->SetMarkerColor(kBlue); 
     graph_extrap->SetLineColor(kBlue); 
     graph_extrap->SetLineWidth(1); 
-    graph_extrap->Draw("SAME PL");
+    graph_extrap->Draw("SAME L");
 
     //now let's build the legend 
     auto legend = new TLegend(0.55,0.7, 0.95,0.9); 
