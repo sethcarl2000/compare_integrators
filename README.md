@@ -23,8 +23,6 @@ This is where the 'main()' routine actually tests the different numiercal integr
 There are a lot of parameters you can edit in 'test_integrators.cpp' if you want to change the function being evaluated, you can change the definition of the **fcn(double)**, function, and the corresponding **fcn_indef_integral(double)**, which is the corresponding indefinite integral. 
 
 
-
-
 ### Compiling
 
 Clone the github repo to a new folder. cd into the folder and make an new repo called 'build'. then you can build it with CMake: 
@@ -43,3 +41,17 @@ You can then execute it with:
 
 ### Editing
 Most of the parameters that you might want to change can be found in 'test_integrators.cpp'. Before the 'main' function, you can see lots of parameters that you can mess with. 
+
+## Results 
+It's clear that at least simpson's rule and the trapezoid rule follow a power law of the form : const * N^a, where _a_ is a constant. In a log-log plot, the _a_ parameter is the slope, so we can estimate it by: 
+
+Trapezoid rule: 
+> _a_ = ( log(error2) - log(error1) )/( log(N2) - log(N1) ) ~ ( -11 + 1 )/( 5 - 0 ) = -2
+
+Simpson's rule: 
+>  _a_ ~ ( -14 + 2 )/( 3 - 0 ) = -4
+
+Gauss quads: 
+> _a_ ~ ( -17 + 1 )/( 1 - 0 ) = -16
+
+
